@@ -12,6 +12,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UFloatingPawnMovement;
 class UArrowComponent;
+class AMyActor;
 
 UCLASS()
 class L20250522_P38_API AMyPawn : public APawn
@@ -53,6 +54,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Data", BlueprintReadWrite)
 	float BoostScale = 0.5f;
 
+	UPROPERTY(EditAnywhere, Category = "Data", BlueprintReadWrite)
+	TSubclassOf<AMyActor> RocketTemplate;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -64,4 +68,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void Pitch(float Value);
+	void Roll(float Value);
+	void Fire();
+	void Boost();
+	void Unboost();
 };

@@ -8,6 +8,8 @@
 #include "Components/ArrowComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Kismet/GameplayStatics.h"
+#include "MyActor.h"
 
 // Sets default values
 AMyPawn::AMyPawn()
@@ -44,7 +46,7 @@ AMyPawn::AMyPawn()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(Box);
-	SpringArm->TargetArmLength = 370.f;
+	SpringArm->TargetArmLength = 170.f;
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->bEnableCameraRotationLag = true;
 	SpringArm->SocketOffset.Z = 41.f;
@@ -74,11 +76,46 @@ void AMyPawn::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	AddMovementInput(GetActorForwardVector(), BoostScale);
+	Left->AddLocalRotation(FRotator(0, 0, 7200.f * UGameplayStatics::GetWorldDeltaSeconds(GetWorld())));
+	Right->AddLocalRotation(FRotator(0, 0, 7200.f * UGameplayStatics::GetWorldDeltaSeconds(GetWorld())));
 }
 
 // Called to bind functionality to input
 void AMyPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAction(TEXT("Fire"), EInputEvent::IE_Pressed, this, &AMyPawn::Fire);
+	PlayerInputComponent->BindAction(TEXT("Boost"), EInputEvent::IE_Pressed, this, &AMyPawn::Boost);
+	PlayerInputComponent->BindAction(TEXT("Boost"), EInputEvent::IE_Released, this, &AMyPawn::Unboost);
+	PlayerInputComponent->BindAxis(TEXT("Pitch"), this, &AMyPawn::Pitch);
+	PlayerInputComponent->BindAxis(TEXT("Roll"), this, &AMyPawn::Roll);
+}
+
+void AMyPawn::Pitch(float Value)
+{
+	AddActorLocalRotation(FRotator(FMath::Clamp(Value, -1.f, 1.f) * RotateSpeed * UGameplayStatics::GetWorldDeltaSeconds(this), 0, 0));
+}
+
+void AMyPawn::Roll(float Value)
+{
+	AddActorLocalRotation(FRotator(0, 0, FMath::Clamp(Value, -1.f, 1.f) * RotateSpeed * UGameplayStatics::GetWorldDeltaSeconds(this)));
+}
+
+void AMyPawn::Fire()
+{
+	// Rocket Spawn
+	RocketTemplate = AMyActor::StaticClass(); // CDO 포인터를 가리킴.
+	GetWorld()->SpawnActor<AMyActor>(RocketTemplate, Arrow->GetComponentToWorld());
+}
+
+void AMyPawn::Boost()
+{
+	BoostScale = 1.0f;
+}
+
+void AMyPawn::Unboost()
+{
+	BoostScale = 0.5f;
 }
 
